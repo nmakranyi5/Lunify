@@ -4,7 +4,7 @@
     "slug": "Lunify",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/Lunify-Icon.png",
     "scheme": "lunify",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
