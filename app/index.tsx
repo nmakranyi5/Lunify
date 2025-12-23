@@ -1,32 +1,31 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-//import MoonIcon from "../assets/images/moon-cycles/testpic.svg";
+import MoonIcon from "../assets/images/moon-cycles/icon";
 
 export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        
         <View style={styles.header}>
           <Text style={styles.appName}>Lunify</Text>
           <Text style={styles.date}>Tuesday, December 23</Text>
         </View>
 
         <View style={styles.moonContainer}>
-          
+          <MoonIcon />
         </View>
 
         <Text style={styles.phase}>Waning Crescent</Text>
         <Text style={styles.illumination}>23% Illuminated</Text>
 
         <View style={styles.infoSection}>
-
+          <Text style={styles.phase}>Hello</Text>
         </View>
-
         <Text style={styles.sectionTitle}>Upcoming Phases</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        </ScrollView>
-
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        ></ScrollView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -81,5 +80,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
+    textAlign: "center",
   },
 });
