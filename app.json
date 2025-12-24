@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Lunify",
-    "slug": "Lunify",
+    "slug": "lunify",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Lunify-Icon.png",
@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nmakranyi.lunify",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -43,6 +47,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3af15ef8-74dc-452e-8207-8b5b15494066"
+      }
+    },
+    "owner": "nmakranyi"
   }
 }

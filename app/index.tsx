@@ -1,8 +1,25 @@
+import { useEffect } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MoonIcon from "../assets/images/moon-cycles/icon";
 
 export default function HomeScreen() {
+  const fetchWeather = async () => {
+    try {
+      const response = await fetch(
+        "http://192.168.56.1:3000/weather?lat=40.71&lon=-74.00"
+      );
+      const data = await response.json();
+      console.log("Weather received:", data.currentWeather);
+    } catch (err) {
+      console.log("Error:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeather();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
