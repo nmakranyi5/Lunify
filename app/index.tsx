@@ -1,23 +1,33 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MoonIcon from "../assets/images/moon-cycles/icon";
 
 export default function HomeScreen() {
-  const fetchWeather = async () => {
+  const lat = 40.71;
+  const lon = -74.0;
+
+  const [phase, setPhase] = useState("");
+  const [illumination, setIllumination] = useState(0);
+  const [date, setDate] = useState();
+
+  const fetchMoonData = async () => {
     try {
       const response = await fetch(
-        "http://192.168.56.1:3000/weather?lat=40.71&lon=-74.00"
+        `http://192.168.56.1:3000/weather?lat=${lat}&lon=${lon}`
       );
       const data = await response.json();
-      console.log("Weather received:", data.currentWeather);
+      console.log("Data received:", data.forecastDaily.days[0]);
+      const today = data.forecastDaily.days[0];
+      setPhase(today.moonPhase);
+      setIllumination(Math.round((today.moonIllumination ?? 0) * 100));
     } catch (err) {
       console.log("Error:", err);
     }
   };
 
   useEffect(() => {
-    fetchWeather();
+    fetchMoonData();
   }, []);
 
   return (
@@ -32,8 +42,8 @@ export default function HomeScreen() {
           <MoonIcon />
         </View>
 
-        <Text style={styles.phase}>Waning Crescent</Text>
-        <Text style={styles.illumination}>23% Illuminated</Text>
+        <Text style={styles.phase}>{phase}</Text>
+        <Text style={styles.illumination}>{illumination}% illuminated</Text>
 
         <View style={styles.infoSection}>
           <Text style={styles.phase}>Hello</Text>
