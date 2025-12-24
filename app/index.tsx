@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MoonIcon from "../assets/images/moon-cycles/icon";
+import MoonIcon from "../assets/images/moon-cycles/fullmoon";
 
 export default function HomeScreen() {
   const lat = 40.71;
