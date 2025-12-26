@@ -3,12 +3,25 @@ import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MOON_PHASES, MoonPhase } from "../constants/moonPhases";
+import { calculateIllumination } from "./calculateIllumination";
 
 export default function HomeScreen() {
   const [currentPhaseInfo, setCurrentPhaseInfo] = useState<
     (typeof MOON_PHASES)[MoonPhase]
   >(MOON_PHASES.newMoon);
   const [date, setDate] = useState("");
+  const [illumination, setIllumination] = useState(0);
+  const [moonset, setMoonset] = useState("");
+  const [moonrise, setMoonrise] = useState("");
+
+  const formatTime = (isoString: string) => {
+    if (!isoString) return "Error";
+    return new Date(isoString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
 
   const getUserLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -38,11 +51,34 @@ export default function HomeScreen() {
       const data = await response.json();
 
       const today = data.forecastDaily.days[0];
+
       const phaseKey = today.moonPhase as MoonPhase;
 
       const phaseInfo = MOON_PHASES[phaseKey] ?? MOON_PHASES.newMoon;
 
+      const illumination = calculateIllumination(new Date());
+
+      const date = new Date(today.forecastStart);
+
+      const moonrise = today.moonrise;
+
+      const moonset = today.moonset;
+
       setCurrentPhaseInfo(phaseInfo);
+
+      setIllumination(illumination);
+
+      setMoonrise(formatTime(moonrise));
+
+      setMoonset(formatTime(moonset));
+
+      setDate(
+        date.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+        })
+      );
     } catch (err) {
       console.log("Error:", err);
     }
@@ -59,7 +95,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.appName}>Lunify</Text>
-          <Text style={styles.date}>Tuesday, December 23</Text>
+          <Text style={styles.date}>{date}</Text>
         </View>
         <View style={styles.moonContainer}>
           <View style={styles.moonGlow}>
@@ -67,12 +103,12 @@ export default function HomeScreen() {
           </View>
         </View>
         <Text style={styles.phase}>{currentPhaseInfo.label}</Text>
-        <Text style={styles.illumination}>
-          ~{currentPhaseInfo.illumination}% illuminated
-        </Text>
+        <Text style={styles.illumination}>~{illumination}% illuminated</Text>
 
         <View style={styles.infoSection}>
-          <Text style={styles.phase}>Hello</Text>
+          <Text style={styles.infoText}>Next Phase </Text>
+          <Text style={styles.infoText}>Moonrise {moonrise}</Text>
+          <Text style={styles.infoText}>Moonset {moonset}</Text>
         </View>
         <Text style={styles.sectionTitle}>Upcoming Phases</Text>
         <ScrollView
@@ -131,7 +167,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   infoSection: {
+    marginTop: 16,
+    alignItems: "baseline",
+  },
+  infoText: {
     marginTop: 32,
+    fontSize: 16,
+    color: "#8FA3BF",
+    textAlign: "left",
   },
   sectionTitle: {
     marginTop: 40,
