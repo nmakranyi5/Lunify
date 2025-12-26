@@ -1,26 +1,48 @@
+import * as Location from "expo-location";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MoonIcon from "../assets/images/moon-cycles/fullmoon";
+import { MOON_PHASES, MoonPhase } from "../constants/moonPhases";
 
 export default function HomeScreen() {
-  const lat = 40.71;
-  const lon = -74.0;
+  const [currentPhaseInfo, setCurrentPhaseInfo] = useState<
+    (typeof MOON_PHASES)[MoonPhase]
+  >(MOON_PHASES.newMoon);
+  const [date, setDate] = useState("");
 
-  const [phase, setPhase] = useState("");
-  const [illumination, setIllumination] = useState(0);
-  const [date, setDate] = useState();
+  const getUserLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status !== "granted") {
+      console.log("Location permission denied");
+      return null;
+    }
+
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+
+    return {
+      lat: location.coords.latitude,
+      lon: location.coords.longitude,
+    };
+  };
 
   const fetchMoonData = async () => {
     try {
+      const coords = await getUserLocation();
+      if (!coords) return;
       const response = await fetch(
-        `http://192.168.56.1:3000/weather?lat=${lat}&lon=${lon}`
+        `http://192.168.56.1:3000/weather?lat=${coords.lat}&lon=${coords.lon}`
       );
       const data = await response.json();
-      console.log("Data received:", data.forecastDaily.days[0]);
+
       const today = data.forecastDaily.days[0];
-      setPhase(today.moonPhase);
-      setIllumination(Math.round((today.moonIllumination ?? 0) * 100));
+      const phaseKey = today.moonPhase as MoonPhase;
+
+      const phaseInfo = MOON_PHASES[phaseKey] ?? MOON_PHASES.newMoon;
+
+      setCurrentPhaseInfo(phaseInfo);
     } catch (err) {
       console.log("Error:", err);
     }
@@ -30,6 +52,8 @@ export default function HomeScreen() {
     fetchMoonData();
   }, []);
 
+  const MoonIcon = currentPhaseInfo.Icon;
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -37,13 +61,15 @@ export default function HomeScreen() {
           <Text style={styles.appName}>Lunify</Text>
           <Text style={styles.date}>Tuesday, December 23</Text>
         </View>
-
         <View style={styles.moonContainer}>
-          <MoonIcon />
+          <View style={styles.moonGlow}>
+            {MoonIcon && <MoonIcon width={200} height={200} color="#000000" />}
+          </View>
         </View>
-
-        <Text style={styles.phase}>{phase}</Text>
-        <Text style={styles.illumination}>{illumination}% illuminated</Text>
+        <Text style={styles.phase}>{currentPhaseInfo.label}</Text>
+        <Text style={styles.illumination}>
+          ~{currentPhaseInfo.illumination}% illuminated
+        </Text>
 
         <View style={styles.infoSection}>
           <Text style={styles.phase}>Hello</Text>
@@ -66,6 +92,8 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
     paddingBottom: 40,
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
     marginTop: 8,
@@ -83,8 +111,12 @@ const styles = StyleSheet.create({
     color: "#8FA3BF",
   },
   moonContainer: {
+    width: 200,
+    height: 200,
+    borderRadius: 90,
     alignItems: "center",
-    marginBottom: 32,
+    justifyContent: "center",
+    paddingBottom: 30,
   },
   phase: {
     fontSize: 26,
@@ -108,5 +140,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFFFFF",
     textAlign: "center",
+  },
+  moonGlow: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#FFFFFF",
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 10,
   },
 });
