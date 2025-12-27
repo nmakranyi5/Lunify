@@ -213,6 +213,7 @@ const styles = StyleSheet.create({
     width: "100%",
     marginVertical: 16,
     maxHeight: 360,
+    flex: 1
   },
 
   phase: {
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#FFFFFF",
+    shadowColor: "rgba(255, 255, 255, 1)",
     shadowOpacity: 0.18,
     shadowRadius: 50,
     shadowOffset: { width: 0, height: 0 },

@@ -1,15 +1,12 @@
-import Svg, { Path } from "react-native-svg"
+import Svg, { Circle, Path } from "react-native-svg";
+
 const SvgComponent = (props) => (
-  <Svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={800}
-    height={800}
-    aria-hidden="true"
-    className="iconify iconify--emojione-monotone"
-    viewBox="0 0 64 64"
-    {...props}
-  >
-    <Path d="M32.002 2h-.004C15.431 2 2 15.432 2 32c0 16.569 13.431 30 29.998 30h.004C48.569 62 62 48.568 62 32 62 15.432 48.569 2 32.002 2M4 32C4 16.537 16.536 4 31.998 4c.244 0 .482.013.725.019.748 4.341 1.279 15.229 1.279 27.981 0 12.754-.531 23.641-1.279 27.983-.243.005-.481.017-.725.017C16.536 60 4 47.465 4 32" />
+  <Svg viewBox="0 0 64 64" {...props}>
+    <Circle cx="32" cy="32" r="30" fill="#050c1dff" />
+    <Path 
+      d="M32 2C15.432 2 2 15.432 2 32s13.432 30 30 30V2z" 
+      fill="rgba(239, 234, 234, 0.85)"
+    />
   </Svg>
-)
-export default SvgComponent
+);
+export default SvgComponent;
