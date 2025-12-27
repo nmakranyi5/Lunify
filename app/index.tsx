@@ -11,11 +11,15 @@ export default function HomeScreen() {
   >(MOON_PHASES.newMoon);
   const [date, setDate] = useState("");
   const [illumination, setIllumination] = useState(0);
-  const [moonset, setMoonset] = useState("");
-  const [moonrise, setMoonrise] = useState("");
+  const [moonrise, setMoonrise] = useState<string | null>(null);
+  const [moonset, setMoonset] = useState<string | null>(null);
+  const [nextPhaseInfo, setNextPhaseInfo] = useState<
+    (typeof MOON_PHASES)[MoonPhase]
+  >(MOON_PHASES.newMoon);
+  const [nextPhaseDate, setNextPhaseDate] = useState<string | null>(null);
 
   const formatTime = (isoString: string) => {
-    if (!isoString) return "Error";
+    if (!isoString) return null;
     return new Date(isoString).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -64,6 +68,10 @@ export default function HomeScreen() {
 
       const moonset = today.moonset;
 
+      const days = data.forecastDaily.days;
+
+      const todayPhase = days[0].moonPhase;
+
       setCurrentPhaseInfo(phaseInfo);
 
       setIllumination(illumination);
@@ -71,6 +79,25 @@ export default function HomeScreen() {
       setMoonrise(formatTime(moonrise));
 
       setMoonset(formatTime(moonset));
+
+      console.log(today);
+
+      const nextPhaseDay = days.find(
+        (day: any, idx: number) => idx > 0 && day.moonPhase !== todayPhase
+      );
+
+      if (nextPhaseDay) {
+        const nextPhaseInfo =
+          MOON_PHASES[nextPhaseDay.moonPhase as MoonPhase] ??
+          MOON_PHASES.newMoon;
+        setNextPhaseInfo(nextPhaseInfo);
+        setNextPhaseDate(
+          new Date(nextPhaseDay.forecastStart).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          })
+        );
+      }
 
       setDate(
         date.toLocaleDateString("en-US", {
@@ -100,7 +127,9 @@ export default function HomeScreen() {
 
         <View style={styles.moonContainer}>
           <View style={styles.moonGlow}>
-            {MoonIcon && <MoonIcon width={260} height={260} color="#000000" />}
+            {MoonIcon && (
+              <MoonIcon width="100%" height="100%" color="#000000" />
+            )}
           </View>
         </View>
 
@@ -110,23 +139,26 @@ export default function HomeScreen() {
         <View style={styles.statsCard}>
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Next Phase</Text>
-            <Text style={styles.statValue}>{}</Text>
+            <Text style={styles.statValue}>
+              {nextPhaseInfo.label
+                ? `${nextPhaseInfo.label} · ${nextPhaseDate}`
+                : "-"}
+            </Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Moonrise</Text>
-            <Text style={styles.statValue}>{moonrise}</Text>
+            <Text style={styles.statValue}>{moonrise ?? "-"}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.statRow}>
             <Text style={styles.statLabel}>Moonset</Text>
-            <Text style={styles.statValue}>{moonset}</Text>
+            <Text style={styles.statValue}>{moonset ?? "-"}</Text>
           </View>
         </View>
 
         <Text style={styles.sectionTitle}>Upcoming Phases</Text>
-        <View style={{ flexDirection: "row" }}
-        >
+        <View style={styles.phaseRow}>
           {Object.values(MOON_PHASES)
             .slice(0, 3)
             .map((phase, idx) => {
@@ -140,6 +172,7 @@ export default function HomeScreen() {
               );
             })}
         </View>
+        <View style={{ height: 24 }} />
       </View>
     </SafeAreaView>
   );
@@ -152,8 +185,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
-    justifyContent: "space-between",
+    paddingBottom: 32,
     alignItems: "center",
     flex: 1,
     maxWidth: 500,
@@ -178,11 +210,11 @@ const styles = StyleSheet.create({
   moonContainer: {
     alignItems: "center",
     justifyContent: "center",
-    flex: 3,
     width: "100%",
-    marginVertical: 10,
-    maxHeight: 400,
+    marginVertical: 16,
+    maxHeight: 360,
   },
+
   phase: {
     fontSize: 26,
     fontWeight: "600",
@@ -217,9 +249,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   moonGlow: {
-    width: 260,
-    height: 260,
-    borderRadius: 130,
+    width: "70%",
+    maxWidth: 260,
+    aspectRatio: 1,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#FFFFFF",
@@ -260,8 +293,7 @@ const styles = StyleSheet.create({
   phaseCard: {
     width: 110,
     height: 130,
-    marginRight: 14,
-    marginLeft: 4,
+    marginHorizontal: 8,
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 18,
     alignItems: "center",
@@ -270,6 +302,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.06)",
   },
+
   phaseCardLabel: {
     marginTop: 10,
     fontSize: 13,
@@ -281,5 +314,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     color: "#8FA3BF",
+  },
+  phaseRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
   },
 });
