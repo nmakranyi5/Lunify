@@ -46,7 +46,7 @@ export default function HomeScreen() {
       const coords = await getUserLocation();
       if (!coords) return;
       const response = await fetch(
-        `http://192.168.56.1:3000/weather?lat=${coords.lat}&lon=${coords.lon}`
+        `https://lunify-backend.onrender.com/weather?lat=${coords.lat}&lon=${coords.lon}`
       );
       const data = await response.json();
 
@@ -158,6 +158,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     justifyContent: "center",
     alignItems: "center",
+    flex: 1
   },
   header: {
     marginTop: 8,
