@@ -92,30 +92,58 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.appName}>Lunify</Text>
           <Text style={styles.date}>{date}</Text>
         </View>
+
         <View style={styles.moonContainer}>
           <View style={styles.moonGlow}>
-            {MoonIcon && <MoonIcon width={200} height={200} color="#000000" />}
+            {MoonIcon && <MoonIcon width={260} height={260} color="#000000" />}
           </View>
         </View>
+
         <Text style={styles.phase}>{currentPhaseInfo.label}</Text>
         <Text style={styles.illumination}>~{illumination}% illuminated</Text>
 
-        <View style={styles.infoSection}>
-          <Text style={styles.infoText}>Next Phase </Text>
-          <Text style={styles.infoText}>Moonrise {moonrise}</Text>
-          <Text style={styles.infoText}>Moonset {moonset}</Text>
+        <View style={styles.statsCard}>
+          <View style={styles.statRow}>
+            <Text style={styles.statLabel}>Next Phase</Text>
+            <Text style={styles.statValue}>{}</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.statRow}>
+            <Text style={styles.statLabel}>Moonrise</Text>
+            <Text style={styles.statValue}>{moonrise}</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.statRow}>
+            <Text style={styles.statLabel}>Moonset</Text>
+            <Text style={styles.statValue}>{moonset}</Text>
+          </View>
         </View>
+
         <Text style={styles.sectionTitle}>Upcoming Phases</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-        ></ScrollView>
-      </ScrollView>
+          contentContainerStyle={{ paddingHorizontal: 4 }}
+        >
+          {Object.values(MOON_PHASES)
+            .slice(0, 4)
+            .map((phase, idx) => {
+              const Icon = phase.Icon;
+              return (
+                <View key={idx} style={styles.phaseCard}>
+                  {Icon && <Icon width={36} height={36} color="#FFFFFF" />}
+                  <Text style={styles.phaseCardLabel}>{phase.label}</Text>
+                  <Text style={styles.phaseCardDate}>Jan {idx * 7 + 3}</Text>
+                </View>
+              );
+            })}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -147,13 +175,13 @@ const styles = StyleSheet.create({
     color: "#8FA3BF",
   },
   moonContainer: {
-    width: 200,
-    height: 200,
-    borderRadius: 90,
+    width: 320,
+    height: 320,
     alignItems: "center",
     justifyContent: "center",
-    paddingBottom: 30,
+    marginBottom: 12,
   },
+
   phase: {
     fontSize: 26,
     fontWeight: "600",
@@ -177,23 +205,86 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   sectionTitle: {
-    marginTop: 40,
+    marginTop: 36,
     marginBottom: 16,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    alignSelf: "flex-start",
+    letterSpacing: 0.4,
+  },
+  moonGlow: {
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#FFFFFF",
+    shadowOpacity: 0.18,
+    shadowRadius: 50,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 16,
+  },
+
+  statsCard: {
+    marginTop: 24,
+    width: "100%",
+    backgroundColor: "rgba(255,255,255,0.03)",
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
+  },
+
+  statRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  statLabel: {
+    fontSize: 14,
+    color: "#8FA3BF",
+    letterSpacing: 0.3,
+  },
+
+  statValue: {
     fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginVertical: 12,
+  },
+
+  phaseCard: {
+    width: 110,
+    height: 130,
+    marginRight: 14,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+
+  phaseCardLabel: {
+    marginTop: 10,
+    fontSize: 13,
     fontWeight: "600",
     color: "#FFFFFF",
     textAlign: "center",
   },
-  moonGlow: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#FFFFFF",
-    shadowOpacity: 0.15,
-    shadowRadius: 30,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 10,
+
+  phaseCardDate: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#8FA3BF",
   },
 });
