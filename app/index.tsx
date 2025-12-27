@@ -1,6 +1,6 @@
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MOON_PHASES, MoonPhase } from "../constants/moonPhases";
 import calculateIllumination from "./calculateIllumination";
@@ -125,13 +125,10 @@ export default function HomeScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Upcoming Phases</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 4 }}
+        <View style={{ flexDirection: "row" }}
         >
           {Object.values(MOON_PHASES)
-            .slice(0, 4)
+            .slice(0, 3)
             .map((phase, idx) => {
               const Icon = phase.Icon;
               return (
@@ -142,7 +139,7 @@ export default function HomeScreen() {
                 </View>
               );
             })}
-        </ScrollView>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -158,11 +155,14 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     justifyContent: "space-between",
     alignItems: "center",
-    flex: 1
+    flex: 1,
+    maxWidth: 500,
+    alignSelf: "center",
+    width: "100%",
   },
   header: {
     marginTop: 8,
-    marginBottom: 20,
+    marginBottom: 8,
     alignItems: "center",
   },
   appName: {
@@ -176,13 +176,13 @@ const styles = StyleSheet.create({
     color: "#8FA3BF",
   },
   moonContainer: {
-    width: 320,
-    height: 320,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    flex: 3,
+    width: "100%",
+    marginVertical: 10,
+    maxHeight: 400,
   },
-
   phase: {
     fontSize: 26,
     fontWeight: "600",
@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#8FA3BF",
     textAlign: "center",
+    marginBottom: 20,
   },
   infoSection: {
     marginTop: 16,
@@ -206,18 +207,19 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   sectionTitle: {
-    marginTop: 36,
-    marginBottom: 16,
-    fontSize: 15,
+    width: "100%",
+    textAlign: "center",
+    marginTop: 20,
+    marginBottom: 20,
+    fontSize: 20,
     fontWeight: "600",
     color: "#FFFFFF",
-    alignSelf: "flex-start",
     letterSpacing: 0.4,
   },
   moonGlow: {
-    width: 300,
-    height: 300,
-    borderRadius: 150,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#FFFFFF",
@@ -226,55 +228,48 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     elevation: 16,
   },
-
   statsCard: {
-    marginTop: 24,
     width: "100%",
     backgroundColor: "rgba(255,255,255,0.03)",
     borderRadius: 16,
-    paddingVertical: 16,
+    paddingVertical: 12,
     paddingHorizontal: 20,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.05)",
   },
-
   statRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-
   statLabel: {
     fontSize: 14,
     color: "#8FA3BF",
     letterSpacing: 0.3,
   },
-
   statValue: {
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
   },
-
   divider: {
     height: 1,
     backgroundColor: "rgba(255,255,255,0.06)",
     marginVertical: 12,
   },
-
   phaseCard: {
     width: 110,
     height: 130,
     marginRight: 14,
+    marginLeft: 4,
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    padding: 12,
+    padding: 8,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.06)",
   },
-
   phaseCardLabel: {
     marginTop: 10,
     fontSize: 13,
@@ -282,7 +277,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     textAlign: "center",
   },
-
   phaseCardDate: {
     marginTop: 4,
     fontSize: 12,
