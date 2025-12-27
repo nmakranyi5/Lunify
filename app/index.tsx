@@ -129,9 +129,6 @@ export default function HomeScreen() {
 
       setUpcomingPhases(upcoming);
 
-      console.log("Upcoming phases:", upcoming);
-
-
       const nextPhaseDay = days.find(
         (day: any, idx: number) => idx > 0 && day.moonPhase !== todayPhase
       );
