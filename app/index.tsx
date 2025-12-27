@@ -1,7 +1,13 @@
-import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Linking,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MOON_PHASES, MoonPhase } from "../constants/moonPhases";
 import calculateIllumination from "./calculateIllumination";
@@ -18,6 +24,10 @@ export default function HomeScreen() {
     (typeof MOON_PHASES)[MoonPhase]
   >(MOON_PHASES.newMoon);
   const [nextPhaseDate, setNextPhaseDate] = useState<string | null>(null);
+  const [attribution, setAttribution] = useState<{
+    logo: string | null;
+    legalPage: string;
+  } | null>(null);
   const PHASE_ORDER: MoonPhase[] = [
     "newMoon",
     "waxingCrescent",
@@ -126,6 +136,31 @@ export default function HomeScreen() {
     fetchMoonData();
   }, []);
 
+  useEffect(() => {
+    const fetchAttribution = async () => {
+      try {
+        const response = await fetch(
+          "https://lunify-backend.onrender.com/attribution/en-US"
+        );
+        const data = await response.json();
+
+        const baseUrl = "https://weatherkit.apple.com";
+        setAttribution({
+          logo:
+            baseUrl +
+            (data["logoDark@3x"] ||
+              data["logoDark@2x"] ||
+              data["logoDark@1x"]),
+          legalPage: data.legalPage,
+        });
+        console.log("ATTRIBUTION DATA:", data);
+      } catch (error) {
+        console.error("Error fetching attribution:", error);
+      }
+    };
+    fetchAttribution();
+  }, []);
+
   const MoonIcon = currentPhaseInfo.Icon;
 
   return (
@@ -136,9 +171,6 @@ export default function HomeScreen() {
             <Text style={styles.appName}>Lunify</Text>
             <Text style={styles.date}>{date}</Text>
           </View>
-          <TouchableOpacity style={styles.aboutButton}>
-            <Ionicons name="information-circle-outline" size={16} color="#8FA3BF" />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.moonContainer}>
@@ -188,9 +220,26 @@ export default function HomeScreen() {
               );
             })}
         </View>
-        <Text style={styles.attributionText}>
-          Weather data provided by Apple Weather through WeatherKit API.
-        </Text>
+        <TouchableOpacity
+          activeOpacity={0.6}
+          onPress={() =>
+            Linking.openURL(
+              attribution?.legalPage ||
+                "https://weatherkit.apple.com/legal-attribution.html"
+            )
+          }
+          style={styles.attributionContainer}
+        >
+          {attribution?.logo ? (
+            <Image
+              source={{ uri: attribution.logo }}
+              style={{ width: 100, height: 20, opacity: 0.6 }}
+              resizeMode="contain"
+            />
+          ) : (
+            <Text style={styles.attributionText}> Weather</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -342,20 +391,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
   },
-  attributionText: {
+  attributionContainer: {
     marginTop: 16,
-    fontSize: 10,
-    color: "#565f6bff",
-    textAlign: "left",
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
   },
-  aboutButton: {
-    position: "absolute",
-    right: 0,
-    top: 5,
-    padding: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+  attributionText: {
+    fontSize: 11,
+    color: "#565f6b",
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  attributionLink: {
+    color: "#8FA3BF",
+    textDecorationLine: "underline",
+    fontWeight: "500",
   },
 });
