@@ -1,6 +1,7 @@
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MOON_PHASES, MoonPhase } from "../constants/moonPhases";
 import calculateIllumination from "./calculateIllumination";
@@ -17,6 +18,16 @@ export default function HomeScreen() {
     (typeof MOON_PHASES)[MoonPhase]
   >(MOON_PHASES.newMoon);
   const [nextPhaseDate, setNextPhaseDate] = useState<string | null>(null);
+  const PHASE_ORDER: MoonPhase[] = [
+    "newMoon",
+    "waxingCrescent",
+    "firstQuarter",
+    "waxingGibbous",
+    "fullMoon",
+    "waningGibbous",
+    "lastQuarter",
+    "waningCrescent",
+  ];
 
   const formatTime = (isoString: string) => {
     if (!isoString) return null;
@@ -121,8 +132,13 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.appName}>Lunify</Text>
-          <Text style={styles.date}>{date}</Text>
+          <View style={{ alignItems: "center" }}>
+            <Text style={styles.appName}>Lunify</Text>
+            <Text style={styles.date}>{date}</Text>
+          </View>
+          <TouchableOpacity style={styles.aboutButton}>
+            <Ionicons name="information-circle-outline" size={16} color="#8FA3BF" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.moonContainer}>
@@ -172,7 +188,9 @@ export default function HomeScreen() {
               );
             })}
         </View>
-        <View style={{ height: 24 }} />
+        <Text style={styles.attributionText}>
+          Weather data provided by Apple Weather through WeatherKit API.
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -193,9 +211,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   header: {
+    width: "100%",
     marginTop: 8,
     marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    position: "relative",
   },
   appName: {
     fontSize: 22,
@@ -213,9 +235,8 @@ const styles = StyleSheet.create({
     width: "100%",
     marginVertical: 16,
     maxHeight: 360,
-    flex: 1
+    flex: 1,
   },
-
   phase: {
     fontSize: 26,
     fontWeight: "600",
@@ -303,7 +324,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.06)",
   },
-
   phaseCardLabel: {
     marginTop: 10,
     fontSize: 13,
@@ -321,5 +341,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
+  },
+  attributionText: {
+    marginTop: 16,
+    fontSize: 10,
+    color: "#565f6bff",
+    textAlign: "left",
+  },
+  aboutButton: {
+    position: "absolute",
+    right: 0,
+    top: 5,
+    padding: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
 });
