@@ -7,10 +7,6 @@ const SvgComponent = (props) => (
       d="M32 2C15.432 2 2 15.432 2 32s13.432 30 30 30c9-10 12-25 12-30s-3-20-12-30z" 
       fill="rgba(239, 234, 234, 0.85)"
     />
-    <Path 
-      d="M32 2C15.432 2 2 15.432 2 32s13.432 30 30 30V2z" 
-      fill="rgba(239, 234, 234, 0.85)"
-    />
   </Svg>
 );
 export default SvgComponent;

@@ -15,29 +15,26 @@ import calculateIllumination from "./calculateIllumination";
 export default function HomeScreen() {
   const [currentPhaseInfo, setCurrentPhaseInfo] = useState<
     (typeof MOON_PHASES)[MoonPhase]
-  >(MOON_PHASES.newMoon);
+  >(MOON_PHASES.new);
   const [date, setDate] = useState("");
   const [illumination, setIllumination] = useState(0);
   const [moonrise, setMoonrise] = useState<string | null>(null);
   const [moonset, setMoonset] = useState<string | null>(null);
   const [nextPhaseInfo, setNextPhaseInfo] = useState<
     (typeof MOON_PHASES)[MoonPhase]
-  >(MOON_PHASES.newMoon);
+  >(MOON_PHASES.new);
   const [nextPhaseDate, setNextPhaseDate] = useState<string | null>(null);
   const [attribution, setAttribution] = useState<{
     logo: string | null;
     legalPage: string;
   } | null>(null);
-  const PHASE_ORDER: MoonPhase[] = [
-    "newMoon",
-    "waxingCrescent",
-    "firstQuarter",
-    "waxingGibbous",
-    "fullMoon",
-    "waningGibbous",
-    "lastQuarter",
-    "waningCrescent",
-  ];
+  const [upcomingPhases, setUpcomingPhases] = useState<
+    {
+      phaseKey: MoonPhase;
+      label: string;
+      date: string;
+    }[]
+  >([]);
 
   const formatTime = (isoString: string) => {
     if (!isoString) return null;
@@ -79,7 +76,7 @@ export default function HomeScreen() {
 
       const phaseKey = today.moonPhase as MoonPhase;
 
-      const phaseInfo = MOON_PHASES[phaseKey] ?? MOON_PHASES.newMoon;
+      const phaseInfo = MOON_PHASES[phaseKey] ?? MOON_PHASES.new;
 
       const illumination = calculateIllumination(new Date());
 
@@ -101,7 +98,39 @@ export default function HomeScreen() {
 
       setMoonset(formatTime(moonset));
 
-      console.log(today);
+      const upcoming: {
+        phaseKey: MoonPhase;
+        label: string;
+        date: string;
+      }[] = [];
+
+      let lastPhase = todayPhase;
+
+      for (let i = 1; i < days.length; i++) {
+        const day = days[i];
+
+        if (day.moonPhase !== lastPhase) {
+          const phaseKey = day.moonPhase as MoonPhase;
+
+          upcoming.push({
+            phaseKey,
+            label: MOON_PHASES[phaseKey].label,
+            date: new Date(day.forecastStart).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            }),
+          });
+
+          lastPhase = phaseKey;
+        }
+
+        if (upcoming.length === 3) break;
+      }
+
+      setUpcomingPhases(upcoming);
+
+      console.log("Upcoming phases:", upcoming);
+
 
       const nextPhaseDay = days.find(
         (day: any, idx: number) => idx > 0 && day.moonPhase !== todayPhase
@@ -110,7 +139,7 @@ export default function HomeScreen() {
       if (nextPhaseDay) {
         const nextPhaseInfo =
           MOON_PHASES[nextPhaseDay.moonPhase as MoonPhase] ??
-          MOON_PHASES.newMoon;
+          MOON_PHASES.new;
         setNextPhaseInfo(nextPhaseInfo);
         setNextPhaseDate(
           new Date(nextPhaseDay.forecastStart).toLocaleDateString("en-US", {
@@ -148,12 +177,9 @@ export default function HomeScreen() {
         setAttribution({
           logo:
             baseUrl +
-            (data["logoDark@3x"] ||
-              data["logoDark@2x"] ||
-              data["logoDark@1x"]),
+            (data["logoDark@3x"] || data["logoDark@2x"] || data["logoDark@1x"]),
           legalPage: data.legalPage,
         });
-        console.log("ATTRIBUTION DATA:", data);
       } catch (error) {
         console.error("Error fetching attribution:", error);
       }
@@ -207,18 +233,20 @@ export default function HomeScreen() {
 
         <Text style={styles.sectionTitle}>Upcoming Phases</Text>
         <View style={styles.phaseRow}>
-          {Object.values(MOON_PHASES)
-            .slice(0, 3)
-            .map((phase, idx) => {
-              const Icon = phase.Icon;
-              return (
-                <View key={idx} style={styles.phaseCard}>
-                  {Icon && <Icon width={36} height={36} color="#FFFFFF" />}
-                  <Text style={styles.phaseCardLabel}>{phase.label}</Text>
-                  <Text style={styles.phaseCardDate}>Jan {idx * 7 + 3}</Text>
-                </View>
-              );
-            })}
+          {upcomingPhases.map((phase) => {
+            const Icon = MOON_PHASES[phase.phaseKey].Icon;
+
+            return (
+              <View
+                key={`${phase.phaseKey}-${phase.date}`}
+                style={styles.phaseCard}
+              >
+                {Icon && <Icon width={36} height={36} color="#FFFFFF" />}
+                <Text style={styles.phaseCardLabel}>{phase.label}</Text>
+                <Text style={styles.phaseCardDate}>{phase.date}</Text>
+              </View>
+            );
+          })}
         </View>
         <TouchableOpacity
           activeOpacity={0.6}

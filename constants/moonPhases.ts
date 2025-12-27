@@ -10,7 +10,7 @@ import WaxingGibbous from "../assets/images/moon-cycles/waxinggibbous";
 export type MoonPhase = keyof typeof MOON_PHASES;
 
 export const MOON_PHASES = {
-  newMoon: {
+  new: {
     label: "New Moon",
     Icon: NewMoon,
     illumination: 0,
@@ -34,7 +34,7 @@ export const MOON_PHASES = {
     illumination: 75,
   },
 
-  fullMoon: {
+  full: {
     label: "Full Moon",
     Icon: FullMoon,
     illumination: 100,
