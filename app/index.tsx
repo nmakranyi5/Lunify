@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MOON_PHASES, MoonPhase } from "../constants/moonPhases";
-import { calculateIllumination } from "./calculateIllumination";
+import calculateIllumination from "./calculateIllumination";
 
 export default function HomeScreen() {
   const [currentPhaseInfo, setCurrentPhaseInfo] = useState<
@@ -155,14 +155,14 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
-    justifyContent: "center",
+    paddingBottom: 20,
+    justifyContent: "space-between",
     alignItems: "center",
     flex: 1
   },
   header: {
     marginTop: 8,
-    marginBottom: 40,
+    marginBottom: 20,
     alignItems: "center",
   },
   appName: {

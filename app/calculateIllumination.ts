@@ -1,6 +1,6 @@
 const synodicMonth = 29.53059;
 
-export function calculateIllumination(date: Date) {
+export default function calculateIllumination(date: Date) {
   const knownNewMoon = new Date(Date.UTC(2000, 0, 6, 18, 14));
 
   const daysSince =
