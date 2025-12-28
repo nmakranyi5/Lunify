@@ -68,8 +68,9 @@ export default function HomeScreen() {
       const coords = await getUserLocation();
       if (!coords) return;
       const response = await fetch(
-        `https://lunify-backend.onrender.com/weather?lat=${coords.lat}&lon=${coords.lon}`
+        `https://vercel-lunify-backend.vercel.app/api/weather?lat=${coords.lat}&lon=${coords.lon}`
       );
+
       const data = await response.json();
 
       const today = data.forecastDaily.days[0];
@@ -135,8 +136,7 @@ export default function HomeScreen() {
 
       if (nextPhaseDay) {
         const nextPhaseInfo =
-          MOON_PHASES[nextPhaseDay.moonPhase as MoonPhase] ??
-          MOON_PHASES.new;
+          MOON_PHASES[nextPhaseDay.moonPhase as MoonPhase] ?? MOON_PHASES.new;
         setNextPhaseInfo(nextPhaseInfo);
         setNextPhaseDate(
           new Date(nextPhaseDay.forecastStart).toLocaleDateString("en-US", {
@@ -166,8 +166,9 @@ export default function HomeScreen() {
     const fetchAttribution = async () => {
       try {
         const response = await fetch(
-          "https://lunify-backend.onrender.com/attribution/en-US"
+          "https://vercel-lunify-backend.vercel.app/api/attribution"
         );
+
         const data = await response.json();
 
         const baseUrl = "https://weatherkit.apple.com";
