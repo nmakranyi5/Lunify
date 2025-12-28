@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
-    width: "100%",
+    width: "40%",
   },
   attributionText: {
     fontSize: 11,
