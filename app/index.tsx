@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  Easing,
   Image,
   Linking,
   ScrollView,
@@ -70,7 +71,6 @@ export default function HomeScreen() {
   };
 
   const fetchMoonData = async () => {
-    const startTime = Date.now();
     try {
       const coords = await getUserLocation();
       if (!coords) {
@@ -101,17 +101,12 @@ export default function HomeScreen() {
 
       const todayPhase = days[0].moonPhase;
 
-      const duration = Date.now() - startTime;
-
-      const delay = Math.max(0, 1000 - duration);
-
-      setTimeout(() => {
-        setIsLoading(false);
-      }, delay);
+      setIsLoading(false);
 
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 500,
+        duration: 350,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }).start(() => {
         setShowLoadingUI(false);
@@ -507,7 +502,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#050B18",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 10, 
+    zIndex: 10,
   },
   loadingText: {
     marginTop: 16,
