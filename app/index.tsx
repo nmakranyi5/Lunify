@@ -1,6 +1,8 @@
 import * as Location from "expo-location";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  Animated,
   Image,
   Linking,
   ScrollView,
@@ -21,6 +23,8 @@ export default function HomeScreen() {
   const [illumination, setIllumination] = useState(0);
   const [moonrise, setMoonrise] = useState<string | null>(null);
   const [moonset, setMoonset] = useState<string | null>(null);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [showLoadingUI, setShowLoadingUI] = useState(true);
   const [nextPhaseInfo, setNextPhaseInfo] = useState<
     (typeof MOON_PHASES)[MoonPhase]
   >(MOON_PHASES.new);
@@ -36,6 +40,7 @@ export default function HomeScreen() {
       date: string;
     }[]
   >([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const formatTime = (isoString: string) => {
     if (!isoString) return null;
@@ -65,9 +70,13 @@ export default function HomeScreen() {
   };
 
   const fetchMoonData = async () => {
+    const startTime = Date.now();
     try {
       const coords = await getUserLocation();
-      if (!coords) return;
+      if (!coords) {
+        setIsLoading(false);
+        return;
+      }
       const response = await fetch(
         `https://vercel-lunify-backend.vercel.app/api/weather?lat=${coords.lat}&lon=${coords.lon}`
       );
@@ -91,6 +100,22 @@ export default function HomeScreen() {
       const days = data.forecastDaily.days;
 
       const todayPhase = days[0].moonPhase;
+
+      const duration = Date.now() - startTime;
+
+      const delay = Math.max(0, 1000 - duration);
+
+      setTimeout(() => {
+        setIsLoading(false);
+      }, delay);
+
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start(() => {
+        setShowLoadingUI(false);
+      });
 
       setCurrentPhaseInfo(phaseInfo);
 
@@ -156,6 +181,7 @@ export default function HomeScreen() {
       );
     } catch (err) {
       console.log("Error:", err);
+      setIsLoading(false);
     }
   };
 
@@ -281,6 +307,15 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      {showLoadingUI && (
+        <Animated.View
+          style={[styles.loadingOverlay, { opacity: fadeAnim }]}
+          pointerEvents="none"
+        >
+          <ActivityIndicator size="large" color="#FFFFFF" />
+          <Text style={styles.loadingText}>Loading Moon Data...</Text>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
@@ -458,6 +493,26 @@ const styles = StyleSheet.create({
   attributionLink: {
     color: "#8FA3BF",
     textDecorationLine: "underline",
+    fontWeight: "500",
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 999,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#050B18",
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#050B18",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10, 
+  },
+  loadingText: {
+    marginTop: 16,
+    color: "#8FA3BF",
+    fontSize: 16,
     fontWeight: "500",
   },
 });
