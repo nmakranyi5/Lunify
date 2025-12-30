@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   Image,
   Linking,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -189,84 +190,97 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={{ alignItems: "center" }}>
-            <Text style={styles.appName}>Lunify</Text>
-            <Text style={styles.date}>{date}</Text>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <View style={{ alignItems: "center" }}>
+              <Text style={styles.appName}>Lunify</Text>
+              <Text style={styles.date}>{date}</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.moonContainer}>
-          <View style={styles.moonGlow}>
-            {MoonIcon && (
-              <MoonIcon width="100%" height="100%" color="#000000" />
+          <View style={styles.moonContainer}>
+            <View style={styles.moonGlow}>
+              {MoonIcon && (
+                <MoonIcon width="100%" height="100%" color="#000000" />
+              )}
+            </View>
+          </View>
+
+          <Text style={styles.phase}>{currentPhaseInfo.label}</Text>
+          <Text style={styles.illumination}>~{illumination}% illuminated</Text>
+
+          <View style={styles.statsCard}>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Next Phase</Text>
+              <Text style={styles.statValue}>
+                {nextPhaseInfo.label
+                  ? `${nextPhaseInfo.label} · ${nextPhaseDate}`
+                  : "-"}
+              </Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Moonrise</Text>
+              <Text style={styles.statValue}>{moonrise ?? "-"}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Moonset</Text>
+              <Text style={styles.statValue}>{moonset ?? "-"}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.sectionTitle}>Upcoming Phases</Text>
+          <View style={styles.phaseRow}>
+            {upcomingPhases.map((phase) => {
+              const Icon = MOON_PHASES[phase.phaseKey].Icon;
+
+              return (
+                <View
+                  key={`${phase.phaseKey}-${phase.date}`}
+                  style={styles.phaseCard}
+                >
+                  <View style={styles.phaseIconContainer}>
+                    {Icon && <Icon width={32} height={32} color="#FFFFFF" />}
+                  </View>
+
+                  <View style={styles.phaseLabelContainer}>
+                    <Text style={styles.phaseCardLabel} numberOfLines={2}>
+                      {phase.label}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.phaseCardDate}>{phase.date}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <TouchableOpacity
+            activeOpacity={0.6}
+            onPress={() =>
+              Linking.openURL(
+                attribution?.legalPage ||
+                  "https://weatherkit.apple.com/legal-attribution.html"
+              )
+            }
+            style={styles.attributionContainer}
+          >
+            {attribution?.logo ? (
+              <Image
+                source={{ uri: attribution.logo }}
+                style={{ width: 100, height: 20, opacity: 0.6 }}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={styles.attributionText}> Weather</Text>
             )}
-          </View>
+          </TouchableOpacity>
         </View>
-
-        <Text style={styles.phase}>{currentPhaseInfo.label}</Text>
-        <Text style={styles.illumination}>~{illumination}% illuminated</Text>
-
-        <View style={styles.statsCard}>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Next Phase</Text>
-            <Text style={styles.statValue}>
-              {nextPhaseInfo.label
-                ? `${nextPhaseInfo.label} · ${nextPhaseDate}`
-                : "-"}
-            </Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Moonrise</Text>
-            <Text style={styles.statValue}>{moonrise ?? "-"}</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Moonset</Text>
-            <Text style={styles.statValue}>{moonset ?? "-"}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>Upcoming Phases</Text>
-        <View style={styles.phaseRow}>
-          {upcomingPhases.map((phase) => {
-            const Icon = MOON_PHASES[phase.phaseKey].Icon;
-
-            return (
-              <View
-                key={`${phase.phaseKey}-${phase.date}`}
-                style={styles.phaseCard}
-              >
-                {Icon && <Icon width={36} height={36} color="#FFFFFF" />}
-                <Text style={styles.phaseCardLabel}>{phase.label}</Text>
-                <Text style={styles.phaseCardDate}>{phase.date}</Text>
-              </View>
-            );
-          })}
-        </View>
-        <TouchableOpacity
-          activeOpacity={0.6}
-          onPress={() =>
-            Linking.openURL(
-              attribution?.legalPage ||
-                "https://weatherkit.apple.com/legal-attribution.html"
-            )
-          }
-          style={styles.attributionContainer}
-        >
-          {attribution?.logo ? (
-            <Image
-              source={{ uri: attribution.logo }}
-              style={{ width: 100, height: 20, opacity: 0.6 }}
-              resizeMode="contain"
-            />
-          ) : (
-            <Text style={styles.attributionText}> Weather</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -287,8 +301,8 @@ const styles = StyleSheet.create({
   },
   header: {
     width: "100%",
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 20,
+    marginBottom: 20,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -308,9 +322,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    marginVertical: 16,
+    marginTop: 20,
+    marginBottom: 16,
     maxHeight: 360,
-    flex: 1,
   },
   phase: {
     fontSize: 26,
@@ -388,27 +402,38 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   phaseCard: {
-    width: 110,
-    height: 130,
-    marginHorizontal: 8,
+    width: 105,
+    height: 120,
+    marginHorizontal: 5,
     backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 18,
     alignItems: "center",
-    justifyContent: "center",
-    padding: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.06)",
   },
+  phaseIconContainer: {
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  phaseLabelContainer: {
+    height: 36,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+  },
   phaseCardLabel: {
-    marginTop: 10,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
     color: "#FFFFFF",
     textAlign: "center",
+    lineHeight: 16,
   },
   phaseCardDate: {
-    marginTop: 4,
-    fontSize: 12,
+    marginTop: "auto",
+    fontSize: 11,
     color: "#8FA3BF",
   },
   phaseRow: {
