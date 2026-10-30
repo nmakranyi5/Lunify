@@ -1,513 +1,235 @@
-import * as Location from "expo-location";
-import { useEffect, useRef, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Animated,
   Easing,
-  Image,
   Linking,
+  Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MOON_PHASES, MoonPhase } from "../constants/moonPhases";
-import calculateIllumination from "./calculateIllumination";
+import Attribution from "../components/Attribution";
+import MoonView from "../components/MoonView";
+import StatTile from "../components/StatTile";
+import Starfield from "../components/Starfield";
+import UpcomingPhases from "../components/UpcomingPhases";
+import { colors, radius, spacing } from "../constants/theme";
+import { useMoonData } from "../hooks/useMoonData";
+
+function Message({
+  icon,
+  title,
+  body,
+  action,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  title: string;
+  body: string;
+  action: string;
+  onPress: () => void;
+}) {
+  return (
+    <View style={styles.center}>
+      <Ionicons name={icon} size={40} color={colors.accent} />
+      <Text style={styles.messageTitle}>{title}</Text>
+      <Text style={styles.messageBody}>{body}</Text>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}
+      >
+        <Text style={styles.buttonText}>{action}</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 export default function HomeScreen() {
-  const [currentPhaseInfo, setCurrentPhaseInfo] = useState<
-    (typeof MOON_PHASES)[MoonPhase]
-  >(MOON_PHASES.new);
-  const [date, setDate] = useState("");
-  const [illumination, setIllumination] = useState(0);
-  const [moonrise, setMoonrise] = useState<string | null>(null);
-  const [moonset, setMoonset] = useState<string | null>(null);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const [showLoadingUI, setShowLoadingUI] = useState(true);
-  const [nextPhaseInfo, setNextPhaseInfo] = useState<
-    (typeof MOON_PHASES)[MoonPhase]
-  >(MOON_PHASES.new);
-  const [nextPhaseDate, setNextPhaseDate] = useState<string | null>(null);
-  const [attribution, setAttribution] = useState<{
-    logo: string | null;
-    legalPage: string;
-  } | null>(null);
-  const [upcomingPhases, setUpcomingPhases] = useState<
-    {
-      phaseKey: MoonPhase;
-      label: string;
-      date: string;
-    }[]
-  >([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { status, data, refreshing, retry, refresh } = useMoonData();
+  const { width } = useWindowDimensions();
+  const moonSize = Math.min(width * 0.72, 300);
 
-  const formatTime = (isoString: string) => {
-    if (!isoString) return null;
-    return new Date(isoString).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
-
-  const getUserLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-
-    if (status !== "granted") {
-      console.log("Location permission denied");
-      return null;
-    }
-
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-
-    return {
-      lat: location.coords.latitude,
-      lon: location.coords.longitude,
-    };
-  };
-
-  const fetchMoonData = async () => {
-    try {
-      const coords = await getUserLocation();
-      if (!coords) {
-        setIsLoading(false);
-        return;
-      }
-      const response = await fetch(
-        `https://vercel-lunify-backend.vercel.app/api/weather?lat=${coords.lat}&lon=${coords.lon}`
-      );
-
-      const data = await response.json();
-
-      const today = data.forecastDaily.days[0];
-
-      const phaseKey = today.moonPhase as MoonPhase;
-
-      const phaseInfo = MOON_PHASES[phaseKey] ?? MOON_PHASES.new;
-
-      const illumination = calculateIllumination(new Date());
-
-      const date = new Date(today.forecastStart);
-
-      const moonrise = today.moonrise;
-
-      const moonset = today.moonset;
-
-      const days = data.forecastDaily.days;
-
-      const todayPhase = days[0].moonPhase;
-
-      setIsLoading(false);
-
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 350,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start(() => {
-        setShowLoadingUI(false);
-      });
-
-      setCurrentPhaseInfo(phaseInfo);
-
-      setIllumination(illumination);
-
-      setMoonrise(formatTime(moonrise));
-
-      setMoonset(formatTime(moonset));
-
-      const upcoming: {
-        phaseKey: MoonPhase;
-        label: string;
-        date: string;
-      }[] = [];
-
-      let lastPhase = todayPhase;
-
-      for (let i = 1; i < days.length; i++) {
-        const day = days[i];
-
-        if (day.moonPhase !== lastPhase) {
-          const phaseKey = day.moonPhase as MoonPhase;
-
-          upcoming.push({
-            phaseKey,
-            label: MOON_PHASES[phaseKey].label,
-            date: new Date(day.forecastStart).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }),
-          });
-
-          lastPhase = phaseKey;
-        }
-
-        if (upcoming.length === 3) break;
-      }
-
-      setUpcomingPhases(upcoming);
-
-      const nextPhaseDay = days.find(
-        (day: any, idx: number) => idx > 0 && day.moonPhase !== todayPhase
-      );
-
-      if (nextPhaseDay) {
-        const nextPhaseInfo =
-          MOON_PHASES[nextPhaseDay.moonPhase as MoonPhase] ?? MOON_PHASES.new;
-        setNextPhaseInfo(nextPhaseInfo);
-        setNextPhaseDate(
-          new Date(nextPhaseDay.forecastStart).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          })
-        );
-      }
-
-      setDate(
-        date.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        })
-      );
-    } catch (err) {
-      console.log("Error:", err);
-      setIsLoading(false);
-    }
-  };
-
+  const appear = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    fetchMoonData();
-  }, []);
+    if (status !== "ready") return;
+    Animated.timing(appear, {
+      toValue: 1,
+      duration: 700,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [status, appear]);
 
-  useEffect(() => {
-    const fetchAttribution = async () => {
-      try {
-        const response = await fetch(
-          "https://vercel-lunify-backend.vercel.app/api/attribution"
-        );
-
-        const data = await response.json();
-
-        const baseUrl = "https://weatherkit.apple.com";
-        setAttribution({
-          logo:
-            baseUrl +
-            (data["logoDark@3x"] || data["logoDark@2x"] || data["logoDark@1x"]),
-          legalPage: data.legalPage,
-        });
-      } catch (error) {
-        console.error("Error fetching attribution:", error);
-      }
-    };
-    fetchAttribution();
-  }, []);
-
-  const MoonIcon = currentPhaseInfo.Icon;
+  const onRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    refresh();
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View style={{ alignItems: "center" }}>
-              <Text style={styles.appName}>Lunify</Text>
-              <Text style={styles.date}>{date}</Text>
-            </View>
+    <View style={styles.root}>
+      <Starfield />
+      <SafeAreaView style={styles.safe}>
+        {status === "loading" && (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.accent} />
+            <Text style={styles.messageBody}>Finding the moon…</Text>
           </View>
+        )}
 
-          <View style={styles.moonContainer}>
-            <View style={styles.moonGlow}>
-              {MoonIcon && (
-                <MoonIcon width="100%" height="100%" color="#000000" />
-              )}
-            </View>
-          </View>
+        {status === "denied" && (
+          <Message
+            icon="location-outline"
+            title="Location needed"
+            body="Lunify uses your location to work out moonrise and moonset times where you are."
+            action="Open Settings"
+            onPress={() => Linking.openSettings()}
+          />
+        )}
 
-          <Text style={styles.phase}>{currentPhaseInfo.label}</Text>
-          <Text style={styles.illumination}>~{illumination}% illuminated</Text>
+        {status === "error" && (
+          <Message
+            icon="cloud-offline-outline"
+            title="Couldn't load moon data"
+            body="Check your connection and try again."
+            action="Try again"
+            onPress={retry}
+          />
+        )}
 
-          <View style={styles.statsCard}>
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Next Phase</Text>
-              <Text style={styles.statValue}>
-                {nextPhaseInfo.label
-                  ? `${nextPhaseInfo.label} · ${nextPhaseDate}`
-                  : "-"}
-              </Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Moonrise</Text>
-              <Text style={styles.statValue}>{moonrise ?? "-"}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Moonset</Text>
-              <Text style={styles.statValue}>{moonset ?? "-"}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.sectionTitle}>Upcoming Phases</Text>
-          <View style={styles.phaseRow}>
-            {upcomingPhases.map((phase) => {
-              const Icon = MOON_PHASES[phase.phaseKey].Icon;
-
-              return (
-                <View
-                  key={`${phase.phaseKey}-${phase.date}`}
-                  style={styles.phaseCard}
-                >
-                  <View style={styles.phaseIconContainer}>
-                    {Icon && <Icon width={32} height={32} color="#FFFFFF" />}
-                  </View>
-
-                  <View style={styles.phaseLabelContainer}>
-                    <Text style={styles.phaseCardLabel} numberOfLines={2}>
-                      {phase.label}
-                    </Text>
-                  </View>
-
-                  <Text style={styles.phaseCardDate}>{phase.date}</Text>
-                </View>
-              );
-            })}
-          </View>
-          <TouchableOpacity
-            activeOpacity={0.6}
-            onPress={() =>
-              Linking.openURL(
-                attribution?.legalPage ||
-                  "https://weatherkit.apple.com/legal-attribution.html"
-              )
-            }
-            style={styles.attributionContainer}
-          >
-            {attribution?.logo ? (
-              <Image
-                source={{ uri: attribution.logo }}
-                style={{ width: 100, height: 20, opacity: 0.6 }}
-                resizeMode="contain"
+        {status === "ready" && data && (
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.accent}
               />
-            ) : (
-              <Text style={styles.attributionText}> Weather</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      {showLoadingUI && (
-        <Animated.View
-          style={[styles.loadingOverlay, { opacity: fadeAnim }]}
-          pointerEvents="none"
-        >
-          <ActivityIndicator size="large" color="#FFFFFF" />
-          <Text style={styles.loadingText}>Loading Moon Data...</Text>
-        </Animated.View>
-      )}
-    </SafeAreaView>
+            }
+          >
+            <Animated.View
+              style={[
+                styles.content,
+                {
+                  opacity: appear,
+                  transform: [
+                    {
+                      translateY: appear.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [16, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <View style={styles.header}>
+                <Text style={styles.appName}>LUNIFY</Text>
+                <Text style={styles.date}>{data.dateLabel}</Text>
+              </View>
+
+              <View
+                style={styles.moon}
+                accessible
+                accessibilityLabel={`${data.label}, about ${data.illumination} percent illuminated`}
+              >
+                <MoonView
+                  size={moonSize}
+                  illumination={data.illumination / 100}
+                  waxing={data.waxing}
+                />
+              </View>
+
+              <View style={styles.titleBlock}>
+                <Text style={styles.phase}>{data.label}</Text>
+                <Text style={styles.subtitle}>
+                  {data.waxing ? "Waxing" : "Waning"} · ~{data.illumination}%
+                  illuminated
+                </Text>
+              </View>
+
+              <View style={styles.grid}>
+                <StatTile
+                  icon="arrow-up-circle-outline"
+                  label="Moonrise"
+                  value={data.moonrise ?? "—"}
+                />
+                <StatTile
+                  icon="arrow-down-circle-outline"
+                  label="Moonset"
+                  value={data.moonset ?? "—"}
+                />
+              </View>
+
+              <UpcomingPhases phases={data.upcoming} />
+              <Attribution />
+            </Animated.View>
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#050B18",
-  },
+  root: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1 },
+  scroll: { flexGrow: 1, paddingBottom: spacing.xl },
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
-    alignItems: "center",
-    flex: 1,
-    maxWidth: 500,
+    width: "100%",
+    maxWidth: 520,
     alignSelf: "center",
-    width: "100%",
+    paddingHorizontal: spacing.xl,
+    gap: spacing.xl,
   },
-  header: {
-    width: "100%",
-    marginTop: 20,
-    marginBottom: 20,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-  },
+  header: { alignItems: "center", paddingTop: spacing.lg, gap: 4 },
   appName: {
-    fontSize: 22,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    color: colors.accent,
+    fontSize: 13,
+    fontWeight: "700",
+    letterSpacing: 4,
   },
-  date: {
-    marginTop: 4,
-    fontSize: 14,
-    color: "#8FA3BF",
-  },
-  moonContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    marginTop: 20,
-    marginBottom: 16,
-    maxHeight: 360,
-  },
+  date: { color: colors.textMuted, fontSize: 14 },
+  moon: { alignItems: "center", justifyContent: "center" },
+  titleBlock: { alignItems: "center", gap: 6 },
   phase: {
-    fontSize: 26,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    color: colors.text,
+    fontSize: 34,
+    fontWeight: "300",
+    letterSpacing: 0.5,
     textAlign: "center",
   },
-  illumination: {
-    marginTop: 6,
-    fontSize: 14,
-    color: "#8FA3BF",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  infoSection: {
-    marginTop: 16,
-    alignItems: "baseline",
-  },
-  infoText: {
-    marginTop: 32,
-    fontSize: 16,
-    color: "#8FA3BF",
-    textAlign: "left",
-  },
-  sectionTitle: {
-    width: "100%",
-    textAlign: "center",
-    marginTop: 20,
-    marginBottom: 20,
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    letterSpacing: 0.4,
-  },
-  moonGlow: {
-    width: "70%",
-    maxWidth: 260,
-    aspectRatio: 1,
-    borderRadius: 999,
+  subtitle: { color: colors.textMuted, fontSize: 15 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
+  center: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "rgba(255, 255, 255, 1)",
-    shadowOpacity: 0.18,
-    shadowRadius: 50,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 16,
+    paddingHorizontal: spacing.xxl,
+    gap: spacing.md,
   },
-  statsCard: {
-    width: "100%",
-    backgroundColor: "rgba(255,255,255,0.03)",
-    borderRadius: 16,
+  messageTitle: { color: colors.text, fontSize: 20, fontWeight: "600" },
+  messageBody: {
+    color: colors.textMuted,
+    fontSize: 15,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  button: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.accent,
+    borderRadius: radius.pill,
     paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
+    paddingHorizontal: 28,
   },
-  statRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  statLabel: {
-    fontSize: 14,
-    color: "#8FA3BF",
-    letterSpacing: 0.3,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    marginVertical: 12,
-  },
-  phaseCard: {
-    width: 105,
-    height: 120,
-    marginHorizontal: 5,
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 18,
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
-  },
-  phaseIconContainer: {
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  phaseLabelContainer: {
-    height: 36,
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-  },
-  phaseCardLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#FFFFFF",
-    textAlign: "center",
-    lineHeight: 16,
-  },
-  phaseCardDate: {
-    marginTop: "auto",
-    fontSize: 11,
-    color: "#8FA3BF",
-  },
-  phaseRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-  },
-  attributionContainer: {
-    marginTop: 16,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "40%",
-  },
-  attributionText: {
-    fontSize: 11,
-    color: "#565f6b",
-    textAlign: "center",
-    lineHeight: 16,
-  },
-  attributionLink: {
-    color: "#8FA3BF",
-    textDecorationLine: "underline",
-    fontWeight: "500",
-  },
-  loadingContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 999,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#050B18",
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#050B18",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
-  },
-  loadingText: {
-    marginTop: 16,
-    color: "#8FA3BF",
-    fontSize: 16,
-    fontWeight: "500",
-  },
+  buttonText: { color: colors.background, fontSize: 15, fontWeight: "600" },
 });
