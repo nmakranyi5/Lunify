@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import Head from "expo-router/head";
 import { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
@@ -44,6 +45,10 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.root}>
+      <Head>
+        <title>Lunify</title>
+        <meta name="description" content="Today's moon phase, illumination, and upcoming phases." />
+      </Head>
       <Starfield />
       <SafeAreaView style={styles.safe}>
         {status === "loading" && (
