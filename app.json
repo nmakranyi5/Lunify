@@ -55,7 +55,6 @@
     ],
     "experiments": {
       "typedRoutes": true,
-      "baseUrl": "/Lunify",
       "reactCompiler": true
     },
     "extra": {
