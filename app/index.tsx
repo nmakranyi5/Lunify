@@ -5,8 +5,6 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
-  Linking,
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -23,37 +21,8 @@ import UpcomingPhases from "../components/UpcomingPhases";
 import { colors, radius, spacing } from "../constants/theme";
 import { useMoonData } from "../hooks/useMoonData";
 
-function Message({
-  icon,
-  title,
-  body,
-  action,
-  onPress,
-}: {
-  icon: React.ComponentProps<typeof Ionicons>["name"];
-  title: string;
-  body: string;
-  action: string;
-  onPress: () => void;
-}) {
-  return (
-    <View style={styles.center}>
-      <Ionicons name={icon} size={40} color={colors.accent} />
-      <Text style={styles.messageTitle}>{title}</Text>
-      <Text style={styles.messageBody}>{body}</Text>
-      <Pressable
-        accessibilityRole="button"
-        onPress={onPress}
-        style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}
-      >
-        <Text style={styles.buttonText}>{action}</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 export default function HomeScreen() {
-  const { status, data, refreshing, retry, refresh } = useMoonData();
+  const { status, data, refreshing, refresh } = useMoonData();
   const { width } = useWindowDimensions();
   const moonSize = Math.min(width * 0.72, 300);
 
@@ -82,26 +51,6 @@ export default function HomeScreen() {
             <ActivityIndicator color={colors.accent} />
             <Text style={styles.messageBody}>Finding the moon…</Text>
           </View>
-        )}
-
-        {status === "denied" && (
-          <Message
-            icon="location-outline"
-            title="Location needed"
-            body="Lunify uses your location to work out moonrise and moonset times where you are."
-            action="Open Settings"
-            onPress={() => Linking.openSettings()}
-          />
-        )}
-
-        {status === "error" && (
-          <Message
-            icon="cloud-offline-outline"
-            title="Couldn't load moon data"
-            body="Check your connection and try again."
-            action="Try again"
-            onPress={retry}
-          />
         )}
 
         {status === "ready" && data && (
@@ -170,6 +119,17 @@ export default function HomeScreen() {
                 />
               </View>
 
+              {data.notice && (
+                <View style={styles.notice}>
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={16}
+                    color={colors.textMuted}
+                  />
+                  <Text style={styles.noticeText}>{data.notice}</Text>
+                </View>
+              )}
+
               <UpcomingPhases phases={data.upcoming} />
               <Attribution />
             </Animated.View>
@@ -217,19 +177,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxl,
     gap: spacing.md,
   },
-  messageTitle: { color: colors.text, fontSize: 20, fontWeight: "600" },
   messageBody: {
     color: colors.textMuted,
     fontSize: 15,
     textAlign: "center",
     lineHeight: 22,
   },
-  button: {
-    marginTop: spacing.sm,
-    backgroundColor: colors.accent,
-    borderRadius: radius.pill,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
+  notice: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.md,
+    padding: spacing.md,
   },
-  buttonText: { color: colors.background, fontSize: 15, fontWeight: "600" },
+  noticeText: { flex: 1, color: colors.textMuted, fontSize: 13, lineHeight: 18 },
 });

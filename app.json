@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/Lunify-Icon.png",
     "scheme": "lunify",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
@@ -17,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#04060F",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -38,9 +38,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#04060F",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#04060F"
           }
         }
       ],
@@ -55,6 +55,7 @@
     ],
     "experiments": {
       "typedRoutes": true,
+      "baseUrl": "/Lunify",
       "reactCompiler": true
     },
     "extra": {

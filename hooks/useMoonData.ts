@@ -2,7 +2,9 @@ import * as Location from "expo-location";
 import { useCallback, useEffect, useState } from "react";
 import { MOON_PHASES, MoonPhase } from "../constants/moonPhases";
 import calculateIllumination from "../lib/calculateIllumination";
+import { estimateDays } from "../lib/localMoon";
 
+const TIMEOUT_MS = 8000;
 const API = "https://vercel-lunify-backend.vercel.app/api/weather";
 
 export type UpcomingPhase = {
@@ -13,6 +15,9 @@ export type UpcomingPhase = {
 };
 
 export type MoonData = {
+  /** "estimate" means computed on-device because WeatherKit was unavailable. */
+  source: "apple" | "estimate";
+  notice: string | null;
   phaseKey: MoonPhase;
   label: string;
   waxing: boolean;
@@ -23,7 +28,7 @@ export type MoonData = {
   upcoming: UpcomingPhase[];
 };
 
-export type MoonStatus = "loading" | "ready" | "denied" | "error";
+export type MoonStatus = "loading" | "ready";
 
 const WAXING: MoonPhase[] = ["waxingCrescent", "firstQuarter", "waxingGibbous"];
 
@@ -38,6 +43,58 @@ const formatTime = (iso?: string | null) =>
 
 const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+type Day = {
+  moonPhase: string;
+  forecastStart: string;
+  moonrise?: string | null;
+  moonset?: string | null;
+};
+
+function buildMoonData(
+  days: Day[],
+  source: MoonData["source"],
+  notice: string | null
+): MoonData {
+  const today = days[0];
+  const phaseKey = today.moonPhase as MoonPhase;
+  const info = MOON_PHASES[phaseKey] ?? MOON_PHASES.new;
+
+  const upcoming: UpcomingPhase[] = [];
+  let last = today.moonPhase as MoonPhase;
+  for (let i = 1; i < days.length && upcoming.length < 3; i++) {
+    const key = days[i].moonPhase as MoonPhase;
+    if (key !== last && MOON_PHASES[key]) {
+      upcoming.push({
+        phaseKey: key,
+        label: MOON_PHASES[key].label,
+        date: shortDate(days[i].forecastStart),
+        inDays: i,
+      });
+    }
+    last = key;
+  }
+
+  return {
+    source,
+    notice,
+    phaseKey,
+    label: info.label,
+    waxing: WAXING.includes(phaseKey),
+    dateLabel: new Date(today.forecastStart).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    }),
+    illumination: calculateIllumination(new Date()),
+    moonrise: formatTime(today.moonrise),
+    moonset: formatTime(today.moonset),
+    upcoming,
+  };
+}
+
+const estimate = (notice: string) =>
+  buildMoonData(estimateDays(30), "estimate", notice);
 
 async function getCoords() {
   const { status } = await Location.requestForegroundPermissionsAsync();
@@ -54,64 +111,42 @@ export function useMoonData() {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
+    let coords: Awaited<ReturnType<typeof getCoords>> = null;
     try {
-      const coords = await getCoords();
-      if (!coords) {
-        setStatus("denied");
-        return;
-      }
+      coords = await getCoords();
+    } catch (err) {
+      console.warn("Error getting location:", err);
+    }
 
-      const response = await fetch(`${API}?lat=${coords.lat}&lon=${coords.lon}`);
+    if (!coords) {
+      setData(
+        estimate("Location is off, so moonrise and moonset aren't available.")
+      );
+      setStatus("ready");
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const response = await fetch(`${API}?lat=${coords.lat}&lon=${coords.lon}`, {
+        signal: controller.signal,
+      });
       if (!response.ok) throw new Error(`Request failed: ${response.status}`);
       const json = await response.json();
-
-      const days: any[] = json.forecastDaily.days;
-      const today = days[0];
-      const phaseKey = today.moonPhase as MoonPhase;
-      const info = MOON_PHASES[phaseKey] ?? MOON_PHASES.new;
-
-      const upcoming: UpcomingPhase[] = [];
-      let last = today.moonPhase as MoonPhase;
-      for (let i = 1; i < days.length && upcoming.length < 3; i++) {
-        const key = days[i].moonPhase as MoonPhase;
-        if (key !== last && MOON_PHASES[key]) {
-          upcoming.push({
-            phaseKey: key,
-            label: MOON_PHASES[key].label,
-            date: shortDate(days[i].forecastStart),
-            inDays: i,
-          });
-        }
-        last = key;
-      }
-
-      setData({
-        phaseKey,
-        label: info.label,
-        waxing: WAXING.includes(phaseKey),
-        dateLabel: new Date(today.forecastStart).toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        }),
-        illumination: calculateIllumination(new Date()),
-        moonrise: formatTime(today.moonrise),
-        moonset: formatTime(today.moonset),
-        upcoming,
-      });
-      setStatus("ready");
+      setData(buildMoonData(json.forecastDaily.days, "apple", null));
     } catch (err) {
-      console.warn("Error loading moon data:", err);
-      setStatus("error");
+      console.warn("Error loading moon data, using estimate:", err);
+      setData(
+        estimate("Showing an estimate. Moonrise and moonset are unavailable offline.")
+      );
+    } finally {
+      clearTimeout(timer);
     }
+    setStatus("ready");
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
-
-  const retry = useCallback(() => {
-    setStatus("loading");
     load();
   }, [load]);
 
@@ -121,5 +156,5 @@ export function useMoonData() {
     setRefreshing(false);
   }, [load]);
 
-  return { status, data, refreshing, retry, refresh };
+  return { status, data, refreshing, refresh };
 }
