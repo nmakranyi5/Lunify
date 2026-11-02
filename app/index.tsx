@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -45,10 +46,16 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.root}>
-      <Head>
-        <title>Lunify</title>
-        <meta name="description" content="Today's moon phase, illumination, and upcoming phases." />
-      </Head>
+      {/* Web only: on native, Head triggers an Expo "handoff origin" alert. */}
+      {Platform.OS === "web" && (
+        <Head>
+          <title>Lunify</title>
+          <meta
+            name="description"
+            content="Today's moon phase, illumination, and upcoming phases."
+          />
+        </Head>
+      )}
       <Starfield />
       <SafeAreaView style={styles.safe}>
         {status === "loading" && (
